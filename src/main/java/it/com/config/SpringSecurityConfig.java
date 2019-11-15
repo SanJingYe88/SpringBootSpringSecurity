@@ -9,10 +9,14 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.httpBasic()            //http basic 认证方式
+        http.formLogin()
+                .loginPage("/login.html")       //指定登录页面
+                .loginProcessingUrl("/login")   //指定登录请求
                 .and()
-                .authorizeRequests()// 授权配置
-                .anyRequest()       // 所有请求
-                .authenticated();   // 都需要认证
+                .authorizeRequests()
+                .antMatchers("/login.html","/css/**").permitAll()     //表示跳转到登录页面的请求不被拦截, 配置css样式不被拦截
+                .anyRequest()
+                .authenticated()
+                .and().csrf().disable();
     }
 }
