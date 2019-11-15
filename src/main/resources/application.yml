@@ -1,0 +1,14 @@
+#数据库连接信息
+spring:
+  datasource:
+    password: root
+    url: jdbc:mysql://localhost:3306/security
+    username: root
+    driver-class-name: com.mysql.jdbc.Driver
+
+#别名
+mybatis:
+  type-aliases-package: it.com.entity
+#驼峰命名
+  configuration:
+    map-underscore-to-camel-case: true
