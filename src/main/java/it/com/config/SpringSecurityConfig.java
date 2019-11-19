@@ -28,6 +28,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     private DataSource dataSource;
     @Autowired
     private MyUserDetailService userDetailService;
+    @Autowired
+    private MyLogOutSuccessHandler logOutSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -47,6 +49,12 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .tokenRepository(persistentTokenRepository()) // 配置 token 持久化仓库
                 .tokenValiditySeconds(3600) // remember 过期时间，单为秒
                 .userDetailsService(userDetailService) // 处理自动登录逻辑
+                .and()
+                .logout()
+                .logoutUrl("/signout")
+//                .logoutSuccessUrl("/signout/success")
+                .logoutSuccessHandler(logOutSuccessHandler)
+                .deleteCookies("JSESSIONID")
                 .and()
                 .authorizeRequests()
                 .antMatchers("/login.html","/code/image","/mustAuth","/css/**").permitAll()     //表示跳转到登录页面的请求不被拦截, 配置css样式不被拦截
