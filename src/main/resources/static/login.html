@@ -11,8 +11,19 @@
     <h3>账户登录</h3>
     <input type="text" placeholder="用户名" name="username" required="required"/>
     <input type="password" placeholder="密码" name="password" required="required"/>
+    <span style="display: inline">
+      <input type="text" name="imageCode" placeholder="验证码" style="width: 50%;"/>
+      <a href="" onclick="Code"><img src="/code/image" id="img"/></a>
+    </span>
     <button type="submit">登录</button>
   </div>
 </form>
 </body>
 </html>
+
+<script>
+  //刷新验证码
+  function Code() {
+    document.getElementById("img").src="/code/image?"+Math.random();
+  }
+</script>
