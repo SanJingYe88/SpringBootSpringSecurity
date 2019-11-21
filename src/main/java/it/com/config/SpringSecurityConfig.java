@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,6 +16,7 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 import javax.sql.DataSource;
 
 @Configuration
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -30,6 +32,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     private MyUserDetailService userDetailService;
     @Autowired
     private MyLogOutSuccessHandler logOutSuccessHandler;
+    @Autowired
+    private MyAuthenticationAccessDeniedHandler authenticationAccessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -51,10 +55,14 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .userDetailsService(userDetailService) // 处理自动登录逻辑
                 .and()
                 .logout()
-                .logoutUrl("/signout")
-//                .logoutSuccessUrl("/signout/success")
-                .logoutSuccessHandler(logOutSuccessHandler)
-                .deleteCookies("JSESSIONID")
+                    .logoutUrl("/signout")
+    //                .logoutSuccessUrl("/signout/success")
+                    .logoutSuccessHandler(logOutSuccessHandler)
+                    .deleteCookies("JSESSIONID")
+                    .invalidateHttpSession(true)
+                .and()
+                .exceptionHandling()
+                .accessDeniedHandler(authenticationAccessDeniedHandler)
                 .and()
                 .authorizeRequests()
                 .antMatchers("/login.html","/code/image","/mustAuth","/css/**").permitAll()     //表示跳转到登录页面的请求不被拦截, 配置css样式不被拦截

@@ -24,6 +24,10 @@ public class MyUserDetailService implements UserDetailsService {
         //从数据库查询该用户
         MyUser myUser = myUserMapper.findByUserName(userName);
 
+        if(myUser == null){
+            return null;
+        }
+
         return new User(userName, myUser.getPassWord(), myUser.isEnabled(),
                 myUser.isAccountNonExpired(), myUser.isCredentialsNonExpired(),
                 myUser.isAccountNonLocked(),
