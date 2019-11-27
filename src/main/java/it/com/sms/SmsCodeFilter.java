@@ -1,7 +1,7 @@
-package it.com.config;
+package it.com.sms;
 
+import it.com.config.ValidateCodeException;
 import it.com.controller.ValidateController;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -19,12 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * 验证码过滤器
- */
-@Slf4j
 @Component
-public class ValidateCodeFilter extends OncePerRequestFilter {
+public class SmsCodeFilter extends OncePerRequestFilter {
 
     @Autowired
     private AuthenticationFailureHandler authenticationFailureHandler;
@@ -34,11 +30,10 @@ public class ValidateCodeFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
                                     FilterChain filterChain) throws ServletException, IOException {
-
-        if (StringUtils.equalsIgnoreCase("/login", httpServletRequest.getRequestURI())
+        if (StringUtils.equalsIgnoreCase("/login/mobile", httpServletRequest.getRequestURI())
                 && StringUtils.equalsIgnoreCase(httpServletRequest.getMethod(), "post")) {
             try {
-                this.validateCode(new ServletWebRequest(httpServletRequest));
+                validateSmsCode(new ServletWebRequest(httpServletRequest));
             } catch (ValidateCodeException e) {
                 authenticationFailureHandler.onAuthenticationFailure(httpServletRequest, httpServletResponse, e);
                 return;
@@ -47,24 +42,24 @@ public class ValidateCodeFilter extends OncePerRequestFilter {
         filterChain.doFilter(httpServletRequest, httpServletResponse);
     }
 
-    private void validateCode(ServletWebRequest servletWebRequest) throws ServletRequestBindingException {
-        ImageCode codeInSession = (ImageCode) sessionStrategy.getAttribute(servletWebRequest, ValidateController.SESSION_KEY_IMAGE_CODE);
-        String codeInRequest = ServletRequestUtils.getStringParameter(servletWebRequest.getRequest(), "imageCode");
-        log.info("codeInSession={}",codeInSession);
-        log.info("codeInRequest={}",codeInRequest);
-        if (StringUtils.isBlank(codeInRequest)) {
+    private void validateSmsCode(ServletWebRequest servletWebRequest) throws ServletRequestBindingException {
+        String smsCodeInRequest = ServletRequestUtils.getStringParameter(servletWebRequest.getRequest(), "smsCode");
+        String mobile = ServletRequestUtils.getStringParameter(servletWebRequest.getRequest(), "mobile");
+        SmsCode codeInSession = (SmsCode) sessionStrategy.getAttribute(servletWebRequest, ValidateController.SESSION_KEY_SMS_CODE + mobile);
+
+        if (StringUtils.isBlank(smsCodeInRequest)) {
             throw new ValidateCodeException("验证码不能为空！");
         }
         if (codeInSession == null) {
-            throw new ValidateCodeException("验证码不存在！");
+            throw new ValidateCodeException("验证码不存在, 请重新发送！");
         }
         if (codeInSession.isExpire()) {
-            sessionStrategy.removeAttribute(servletWebRequest, ValidateController.SESSION_KEY_IMAGE_CODE);
-            throw new ValidateCodeException("验证码已过期！");
+            sessionStrategy.removeAttribute(servletWebRequest, ValidateController.SESSION_KEY_SMS_CODE + mobile);
+            throw new ValidateCodeException("验证码已过期, 请重新发送！");
         }
-        if (!StringUtils.equalsIgnoreCase(codeInSession.getCode(), codeInRequest)) {
+        if (!StringUtils.equalsIgnoreCase(codeInSession.getCode(), smsCodeInRequest)) {
             throw new ValidateCodeException("验证码不正确！");
         }
-        sessionStrategy.removeAttribute(servletWebRequest, ValidateController.SESSION_KEY_IMAGE_CODE);
+        sessionStrategy.removeAttribute(servletWebRequest, ValidateController.SESSION_KEY_SMS_CODE + mobile);
     }
 }

@@ -26,4 +26,6 @@ public class MyUser implements Serializable {
     private boolean credentialsNonExpired;
     //判断用户是否可用.
     private boolean enabled;
+    //手机号
+    private String mobile;
 }

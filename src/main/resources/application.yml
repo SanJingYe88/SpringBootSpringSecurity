@@ -12,3 +12,4 @@ mybatis:
 #驼峰命名
   configuration:
     map-underscore-to-camel-case: true
+debug: true

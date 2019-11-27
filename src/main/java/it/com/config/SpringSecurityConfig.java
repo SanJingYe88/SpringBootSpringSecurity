@@ -1,5 +1,8 @@
 package it.com.config;
 
+import it.com.sms.SmsAuthenticationConfig;
+import it.com.sms.SmsAuthenticationFilter;
+import it.com.sms.SmsCodeFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -26,14 +29,16 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private ValidateCodeFilter validateCodeFilter;
     @Autowired
+    private SmsCodeFilter smsCodeFilter;
+    @Autowired
     @Qualifier("dataSource")
     private DataSource dataSource;
-    @Autowired
-    private MyUserDetailService userDetailService;
     @Autowired
     private MyLogOutSuccessHandler logOutSuccessHandler;
     @Autowired
     private MyAuthenticationAccessDeniedHandler authenticationAccessDeniedHandler;
+    @Autowired
+    private SmsAuthenticationConfig smsAuthenticationConfig;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,16 +48,12 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.addFilterBefore(validateCodeFilter, UsernamePasswordAuthenticationFilter.class)    // 添加验证码校验过滤器
+                .addFilterBefore(smsCodeFilter, UsernamePasswordAuthenticationFilter.class) // 添加短信验证码校验过滤器
                 .formLogin()
                 .loginPage("/mustAuth")       //指定跳转登录url
                 .loginProcessingUrl("/login")   //指定登录请求
                 .successHandler(authenticationSuccessHandler) // 处理登录成功
                 .failureHandler(authenticationFailureHandler) // 处理登录失败
-                .and()
-                .rememberMe()
-                .tokenRepository(persistentTokenRepository()) // 配置 token 持久化仓库
-                .tokenValiditySeconds(3600) // remember 过期时间，单为秒
-                .userDetailsService(userDetailService) // 处理自动登录逻辑
                 .and()
                 .logout()
                     .logoutUrl("/signout")
@@ -65,10 +66,11 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(authenticationAccessDeniedHandler)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/login.html","/code/image","/mustAuth","/css/**").permitAll()     //表示跳转到登录页面的请求不被拦截, 配置css样式不被拦截
+                .antMatchers("/login.html","/code/image","/mustAuth","/code/sms","/css/**").permitAll()     //表示跳转到登录页面的请求不被拦截, 配置css样式不被拦截
                 .anyRequest()
                 .authenticated()
-                .and().csrf().disable();
+                .and().csrf().disable()
+                .apply(smsAuthenticationConfig); // 将短信验证码认证配置加到 Spring Security 中;
     }
 
     @Bean

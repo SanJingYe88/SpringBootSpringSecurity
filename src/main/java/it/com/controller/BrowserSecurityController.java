@@ -31,6 +31,6 @@ public class BrowserSecurityController {
                 redirectStrategy.sendRedirect(request, response, "/login.html");
             }
         }
-        return "访问的资源需要身份认证！请先登录";
+        return "访问的资源需要身份认证！请先登录 <a href='http://localhost:8080/login.html'>点击</a>";
     }
 }
